@@ -1,28 +1,59 @@
 <template>
-  <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
-  </div>
+  <v-app>
+    <v-main>
+      <v-simple-table>
+        <template v-slot:default>
+          <thead>
+            <tr>
+              <th class="text-left">Name</th>
+              <th class="text-left">number of words sent</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(item, index) in sortedTableData" :key="index">
+              <td>{{ item[0] }}</td>
+              <td>{{ item[1] }}</td>
+            </tr>
+          </tbody>
+        </template>
+      </v-simple-table>
+    </v-main>
+  </v-app>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
-
 export default {
-  name: 'App',
-  components: {
-    HelloWorld
-  }
-}
+  name: "App",
+  data() {
+    return {
+      connection: null,
+      tableData: {},
+      tableKey: 0,
+    };
+  },
+  computed: {
+    sortedTableData: function () {
+      this.tableKey;
+      return Object.entries(this.tableData).sort(([key1], [key2]) =>
+        key1.localeCompare(key2)
+      );
+    },
+  },
+  created() {
+    this.connection = new WebSocket(
+      "wss://tso-take-home-chat-room.herokuapp.com"
+    );
+    const vm = this;
+    this.connection.onmessage = function (event) {
+      const sender = event.data.substring(0, event.data.indexOf(":"));
+      const msg = event.data.substring(event.data.indexOf(":") + 2);
+      const numberOfWordsInMsg = msg.split(" ").length;
+      if (!vm.tableData[sender]) {
+        vm.tableData[sender] = 0;
+      }
+      vm.tableData[sender] += numberOfWordsInMsg;
+      vm.tableKey++;
+    };
+  },
+};
 </script>
-
-<style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
-</style>
